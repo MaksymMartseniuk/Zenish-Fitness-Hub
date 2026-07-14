@@ -2,6 +2,7 @@ from rest_framework.generics import CreateAPIView
 from .models import CustomUser, Profile
 from .serializers import CustomUserSerializer, ProfileSerializer
 from rest_framework.permissions import AllowAny
+
 # Create your views here.
 
 

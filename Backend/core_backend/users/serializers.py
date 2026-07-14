@@ -1,5 +1,7 @@
 from rest_framework import serializers
 from .models import CustomUser, Profile
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -52,3 +54,15 @@ class ProfileSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "updated_at", "is_premium"]
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token["email"] = user.email
+        token["is_staff"] = user.is_staff
+        if hasattr(user, "profile"):
+            token["first_name"] = user.profile.first_name
+            token["is_superuser"] = user.is_superuser
+        return token
