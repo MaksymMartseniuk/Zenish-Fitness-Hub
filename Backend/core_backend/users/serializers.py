@@ -13,9 +13,10 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "password",
             "telegram_id",
             "is_staff",
+            "is_superuser",
             "is_active",
         ]
-        read_only_fields = ["id", "is_staff", "is_active"]
+        read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
