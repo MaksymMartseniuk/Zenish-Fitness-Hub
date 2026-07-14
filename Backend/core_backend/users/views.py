@@ -14,3 +14,4 @@ class UserRegistrationView(CreateAPIView):
     permission_classes = [AllowAny]
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
+

@@ -2,10 +2,14 @@ from rest_framework import serializers
 from .models import CustomUser, Profile
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.password_validation import validate_password
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(
+        write_only=True, required=False, validators=[validate_password]
+    )
+    confirm_password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = CustomUser
@@ -13,6 +17,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "password",
+            "confirm_password",
             "telegram_id",
             "is_staff",
             "is_superuser",
@@ -20,7 +25,19 @@ class CustomUserSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
 
+    def validate(self, attrs):
+        password = attrs.get("password")
+        confirm_password = attrs.get("confirm_password")
+
+        if password and confirm_password and password != confirm_password:
+            raise serializers.ValidationError(
+                {"password": "Password and Confirm Password do not match."}
+            )
+
+        return attrs
+
     def create(self, validated_data):
+        validated_data.pop("confirm_password", None)
         password = validated_data.pop("password", None)
         user = CustomUser(**validated_data)
         if password:
