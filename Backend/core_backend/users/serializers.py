@@ -1,11 +1,17 @@
 from rest_framework import serializers
 from .models import CustomUser, Profile
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from django.contrib.auth.password_validation import validate_password
+from .services import send_verification_email
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
+    """Serializer for the CustomUser model, handling user registration and validation."""
+
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
+    confirm_password = serializers.CharField(write_only=True, required=True)
 
     class Meta:
         model = CustomUser
@@ -13,21 +19,38 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "id",
             "email",
             "password",
+            "confirm_password",
             "telegram_id",
             "is_staff",
             "is_superuser",
             "is_active",
+            "is_verified",
         ]
-        read_only_fields = ["id", "is_staff", "is_superuser", "is_active"]
+        read_only_fields = [
+            "id",
+            "is_staff",
+            "is_superuser",
+            "is_active",
+            "is_verified",
+        ]
+
+    def validate(self, attrs):
+        if attrs.get("password") != attrs.get("confirm_password"):
+            raise serializers.ValidationError(
+                {"password": "Password and Confirm Password do not match."}
+            )
+        return attrs
 
     def create(self, validated_data):
-        password = validated_data.pop("password", None)
+        validated_data.pop(
+            "confirm_password", None
+        )  # Remove confirm_password as it's not needed for user creation
+        password = validated_data.pop("password")
+        validated_data["is_verified"] = False  # Set is_verified to False for new users
         user = CustomUser(**validated_data)
-        if password:
-            user.set_password(password)
-        else:
-            user.set_unusable_password()
+        user.set_password(password)
         user.save()
+        send_verification_email.delay(user.id)  # Send verification email asynchronously
         return user
 
 
