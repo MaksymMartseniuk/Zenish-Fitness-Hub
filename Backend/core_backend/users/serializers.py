@@ -25,6 +25,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_superuser",
             "is_active",
             "is_verified",
+            "date_joined",
         ]
         read_only_fields = [
             "id",
@@ -32,6 +33,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
             "is_superuser",
             "is_active",
             "is_verified",
+            "date_joined",
         ]
 
     def validate(self, attrs):
@@ -89,3 +91,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             token["first_name"] = user.profile.first_name
             token["is_superuser"] = user.is_superuser
         return token
+
+
+class VerifyEmailSerializer(serializers.Serializer):
+    """Serializer for verifying a user's email using a verification code."""
+
+    email = serializers.EmailField(required=True)
+    verification_code = serializers.CharField(required=True, max_length=6)

@@ -14,6 +14,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 from datetime import timedelta
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -193,4 +194,10 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
     }
+}
+CELERY_BEAT_SCHEDULE = {
+    "cleanup-unverified-users-daily": {
+        "task": "users.services.cleanup_unverified_users",
+        "schedule": crontab(hour=3, minute=0),
+    },
 }

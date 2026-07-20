@@ -5,6 +5,9 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from django.core.cache import cache
 from django.conf import settings
+from django.utils import timezone
+from datetime import timedelta
+from .models import CustomUser
 
 
 @shared_task
@@ -32,3 +35,13 @@ def send_verification_email(user_id: int) -> None:
         email.send(fail_silently=False)
     except CustomUser.DoesNotExist:
         return "User does not exist."
+
+
+@shared_task
+def cleanup_unverified_users() -> str:
+    """Periodary task for deleting unverifying users"""
+    expiration_date = timezone.now() - timedelta(hours=24)
+    deleted_count, _ = CustomUser.objects.filter(
+        is_verified=False, date_joined__lt=expiration_date
+    ).delete()
+    return f"Deleted {deleted_count} unverified users."
