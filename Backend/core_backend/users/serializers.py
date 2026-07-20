@@ -98,3 +98,9 @@ class VerifyEmailSerializer(serializers.Serializer):
 
     email = serializers.EmailField(required=True)
     verification_code = serializers.CharField(required=True, max_length=6)
+
+
+class ResendVerificationEmailSerializer(serializers.Serializer):
+    """Serializer for resending the verification code"""
+
+    email = serializers.EmailField(required=True)

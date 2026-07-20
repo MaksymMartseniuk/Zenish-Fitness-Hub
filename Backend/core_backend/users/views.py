@@ -1,10 +1,16 @@
 from rest_framework.generics import CreateAPIView, GenericAPIView
 from .models import CustomUser, Profile
-from .serializers import CustomUserSerializer, ProfileSerializer, VerifyEmailSerializer
+from .serializers import (
+    CustomUserSerializer,
+    ProfileSerializer,
+    VerifyEmailSerializer,
+    ResendVerificationEmailSerializer,
+)
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.cache import cache
+from .services import send_verification_email
 
 # Create your views here.
 
@@ -41,11 +47,11 @@ class UserVerificationEmailView(GenericAPIView):
         serializer_data = self.get_serializer(data=request.data)
         serializer_data.is_valid()
         email = serializer_data.validated_data["email"]
-        code = serializer_data.validated_data["code"]
+        verification_code = serializer_data.validated_data["verification_code"]
         cache_key: str = f"email_verification_code_{email}"
         saved_code = cache.get(cache_key)
 
-        if saved_code is None or str(saved_code) != str(code):
+        if saved_code is None or str(saved_code) != str(verification_code):
             return Response(
                 {"error": "Invalid or expired verification code."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -67,5 +73,37 @@ class UserVerificationEmailView(GenericAPIView):
         except CustomUser.DoesNotExist:
             return Response(
                 {"error": "User with this email does not exist."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class ResendVerificationEmailView(GenericAPIView):
+    """Endpoint for resending verification code for email"""
+
+    permission_classes = [AllowAny]
+    serializer_class = ResendVerificationEmailSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data["email"]
+        try:
+            user: CustomUser = CustomUser.objects.get(email=email)
+            if user.is_verified:
+                return Response(
+                    {"message": "Email is already verified. You can log in."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            send_verification_email.delay(user_id=user.id)
+            return Response(
+                {
+                    "message": "Verification code resent successfully. Please check your email."
+                },
+                status=status.HTTP_200_OK,
+            )
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"error": "User with this email not found."},
                 status=status.HTTP_404_NOT_FOUND,
             )
