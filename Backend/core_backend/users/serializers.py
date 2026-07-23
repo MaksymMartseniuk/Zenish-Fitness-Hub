@@ -3,6 +3,7 @@ from .models import CustomUser, Profile
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from .services import send_verification_email
+from rest_framework.exceptions import AuthenticationFailed
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
@@ -82,6 +83,14 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate()
+        if not data.user.is_verified:
+            raise AuthenticationFailed(
+                "Please verify your email address before logging in."
+            )
+        return data
+
     @classmethod
     def get_token(cls, user):
         token = super().get_token(user)
