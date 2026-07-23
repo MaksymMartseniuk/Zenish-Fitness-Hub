@@ -84,8 +84,8 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
-        data = super().validate()
-        if not data.user.is_verified:
+        data = super().validate(attrs)
+        if not self.user.is_verified:
             raise AuthenticationFailed(
                 "Please verify your email address before logging in."
             )
@@ -96,9 +96,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
         token["email"] = user.email
         token["is_staff"] = user.is_staff
+        token["is_superuser"] = user.is_superuser
         if hasattr(user, "profile"):
             token["first_name"] = user.profile.first_name
-            token["is_superuser"] = user.is_superuser
         return token
 
 
