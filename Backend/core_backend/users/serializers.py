@@ -104,3 +104,26 @@ class ResendVerificationEmailSerializer(serializers.Serializer):
     """Serializer for resending the verification code"""
 
     email = serializers.EmailField(required=True)
+
+
+class PasswordResetRequestSerializer(serializers.Serializer):
+    """Serializer for sending a password reset link."""
+
+    email = serializers.EmailField(required=True)
+
+
+class PasswordResetConfirmSerializer(serializers.Serializer):
+    """Serializer for setting a new password via token."""
+
+    token = serializers.CharField(required=True)
+    password = serializers.CharField(
+        write_only=True, required=True, validators=[validate_password]
+    )
+    confirm_password = serializers.CharField(write_only=True, required=True)
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["confirm_password"]:
+            raise serializers.ValidationError(
+                {"password": "The two password fields didn't match."}
+            )
+        return attrs

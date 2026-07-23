@@ -201,3 +201,5 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(hour=3, minute=0),
     },
 }
+
+FRONTEND_URL = os.getenv("FRONTEND_URL")

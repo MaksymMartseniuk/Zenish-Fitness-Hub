@@ -5,12 +5,15 @@ from .serializers import (
     ProfileSerializer,
     VerifyEmailSerializer,
     ResendVerificationEmailSerializer,
+    PasswordResetRequestSerializer,
+    PasswordResetConfirmSerializer,
 )
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import status
 from django.core.cache import cache
-from .services import send_verification_email
+from .services import send_verification_email, send_password_reset_email
+import secrets
 
 # Create your views here.
 
@@ -105,5 +108,67 @@ class ResendVerificationEmailView(GenericAPIView):
         except CustomUser.DoesNotExist:
             return Response(
                 {"error": "User with this email not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+
+class PasswordResetRequestView(GenericAPIView):
+    """Endpoint to request a password reset link."""
+
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetRequestSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"]
+        try:
+            reset_token = secrets.token_urlsafe(32)
+            cache_key = f"reset_token:{reset_token}"
+            cache.set(cache_key, email, timeout=900)
+            send_password_reset_email(email, reset_token)
+        except CustomUser.DoesNotExist:
+            pass
+
+        return Response(
+            {
+                "message": "If an account with this email exists, a password reset link has been sent."
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(GenericAPIView):
+    """Endpoint to set a new password using a token."""
+
+    permission_classes = [AllowAny]
+    serializer_class = PasswordResetConfirmSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        token = serializer.validated_data["token"]
+        new_password = serializer.validated_data["password"]
+        cache_key = f"reset_token:{token}"
+        email = cache.get(cache_key)
+        if not email:
+            return Response(
+                {"error": "Invalid or expired reset token."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            user: CustomUser = CustomUser.objects.get(email=email)
+            user.set_password(new_password)
+            user.save(update_fields=["password"])
+            cache.delete(cache_key)
+            return Response(
+                {
+                    "message": "Password has been reset successfully. You can now log in."
+                },
+                status=status.HTTP_200_OK,
+            )
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"error": "User associated with this token no longer exists."},
                 status=status.HTTP_404_NOT_FOUND,
             )
