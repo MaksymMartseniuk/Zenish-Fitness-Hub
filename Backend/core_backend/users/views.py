@@ -40,7 +40,7 @@ class UserRegistrationView(CreateAPIView):
     permission_classes = [AllowAny]
     queryset = CustomUser.objects.all()
     serializer_class = CustomUserSerializer
-    throttle_classes = RegisterRateThrottle
+    throttle_classes = (RegisterRateThrottle,)
 
     def create(self, request, *args, **kwargs):
         """Override the create method to handle user registration."""
@@ -60,7 +60,7 @@ class UserVerificationEmailView(GenericAPIView):
 
     permission_classes = [AllowAny]
     serializer_class = VerifyEmailSerializer
-    throttle_classes = VerifyEmailRateThrottle
+    throttle_classes = (VerifyEmailRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         serializer_data = self.get_serializer(data=request.data)
@@ -101,7 +101,7 @@ class ResendVerificationEmailView(GenericAPIView):
 
     permission_classes = [AllowAny]
     serializer_class = ResendVerificationEmailSerializer
-    throttle_classes = ResendVerifyRateThrottle
+    throttle_classes = (ResendVerifyRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -134,7 +134,7 @@ class PasswordResetRequestView(GenericAPIView):
 
     permission_classes = [AllowAny]
     serializer_class = PasswordResetRequestSerializer
-    throttle_classes = PasswordResetRequestRateThrottle
+    throttle_classes = (PasswordResetRequestRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -161,7 +161,7 @@ class PasswordResetConfirmView(GenericAPIView):
 
     permission_classes = [AllowAny]
     serializer_class = PasswordResetConfirmSerializer
-    throttle_classes = PasswordResetConfirmRateThrottle
+    throttle_classes = (PasswordResetConfirmRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
@@ -227,7 +227,7 @@ class ChangePasswordView(GenericAPIView):
 
     permission_classes = [IsAuthenticated]
     serializer_class = ChangePasswordSerializer
-    throttle_classes = ChangePasswordRateThrottle
+    throttle_classes = (ChangePasswordRateThrottle,)
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
@@ -253,9 +253,9 @@ class UserMeView(GenericAPIView):
     Endpoint to retrieve the currently authenticated user's details.
     """
 
-    permission_class = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
     serializer_class = CustomUserSerializer
-    throttle_classes = UserMeRateThrottle
+    throttle_classes = (UserMeRateThrottle,)
 
     def get_object(self):
         return self.request.user
