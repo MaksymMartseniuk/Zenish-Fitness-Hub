@@ -1,4 +1,4 @@
-from rest_framework.generics import CreateAPIView, GenericAPIView
+from rest_framework.generics import CreateAPIView, GenericAPIView, RetrieveAPIView
 from .models import CustomUser, Profile
 from .serializers import (
     CustomUserSerializer,
@@ -248,7 +248,7 @@ class ChangePasswordView(GenericAPIView):
         )
 
 
-class UserMeView(GenericAPIView):
+class UserMeView(RetrieveAPIView):
     """
     Endpoint to retrieve the currently authenticated user's details.
     """
