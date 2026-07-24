@@ -118,7 +118,17 @@ AUTH_PASSWORD_VALIDATORS = [
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
-    )
+    ),
+    "DEFAULT_THROTTLE_RATES": {
+        "register": "3/hour",
+        "login": "5/minute",
+        "verify_email": "10/hour",
+        "resend_verify": "3/hour",
+        "password_reset_req": "3/hour",
+        "password_reset_conf": "5/hour",
+        "change_password": "3/day",
+        "user_me": "60/minute",
+    },
 }
 
 SIMPLE_JWT = {
