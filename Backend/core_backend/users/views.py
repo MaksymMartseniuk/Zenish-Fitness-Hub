@@ -230,3 +230,15 @@ class ChangePasswordView(GenericAPIView):
         return Response(
             {"message": "Password updated successfully."}, status=status.HTTP_200_OK
         )
+
+
+class UserMeView(GenericAPIView):
+    """
+    Endpoint to retrieve the currently authenticated user's details.
+    """
+
+    permission_class = [IsAuthenticated]
+    serializer_class = [CustomUserSerializer]
+
+    def get_object(self):
+        return self.request.user

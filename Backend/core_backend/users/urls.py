@@ -7,6 +7,7 @@ from .views import (
     PasswordResetConfirmView,
     PasswordResetRequestView,
     ChangePasswordView,
+    UserMeView,
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -32,4 +33,5 @@ userurlpatterns = [
         name="password-reset-confirm",
     ),
     path("change-password", ChangePasswordView.as_view(), name="change-password"),
+    path("/me", UserMeView.as_view(), name="me"),
 ]
